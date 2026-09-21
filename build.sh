@@ -18,3 +18,10 @@ cd "$(dirname "$0")" && mkdir -p docs && {
   printf '<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js"));</script>\n'
   printf '</body>\n</html>\n'
 } > docs/index.html
+
+# Version « raccourci » : même appli, sans manifeste. Les navigateurs l'ajoutent à
+# l'écran d'accueil comme simple raccourci (pas d'application créée, donc pas de
+# contrôle Google Play Protect). Passe en plein écran au premier toucher.
+sed -e '/rel="manifest"/d' \
+    -e 's#</body>#<script>addEventListener("pointerdown", () => { const d = document.documentElement; if (!document.fullscreenElement \&\& d.requestFullscreen) d.requestFullscreen().catch(() => {}); }, { once: true });</script>\n</body>#' \
+    docs/index.html > docs/raccourci.html
