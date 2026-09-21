@@ -1,7 +1,7 @@
 /* Service worker du Nuancier : l'appli fonctionne hors connexion.
    - La page : réseau d'abord (pour recevoir les mises à jour), cache si hors ligne.
    - Icônes, manifeste, polices : cache d'abord. */
-const CACHE = "nuancier-v3";
+const CACHE = "nuancier-v4";
 const CORE = ["./", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
@@ -32,7 +32,7 @@ self.addEventListener("fetch", e => {
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
       const url = new URL(req.url);
-      const cacheable = url.origin === location.origin || /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
+      const cacheable = url.origin === location.origin || (/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname) || url.hostname === "raw.githubusercontent.com");
       if (cacheable && (res.ok || res.type === "opaque")) {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(req, copy));
