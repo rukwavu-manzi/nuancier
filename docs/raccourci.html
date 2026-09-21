@@ -461,10 +461,10 @@ const TYPE_COLORS = { 1: "#A8A77A", 2: "#C22E28", 3: "#A98FF3", 4: "#A33EA1", 5:
 const REGIONS = ["Kanto", "Johto", "Hoenn", "Sinnoh", "Unys", "Kalos", "Alola", "Galar", "Paldea"];
 const SPRITE = (n, shiny) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${shiny ? "shiny/" : ""}${n}.png`;
 /* ---------- Shiny hunting ----------
-   SHINY_RATE : chance qu'un chargement soit shiny (1 = 100 % pour les tests ; ex. 1 / 512 ensuite).
+   SHINY_RATE : chance qu'un chargement soit shiny (1 = 100 % pour les tests).
    RELOAD_AFTER : un Pokémon n'est rechargé (nouveau tirage shiny) qu'après au moins
    ce nombre de slides depuis le dernier passage sur sa case : les allers-retours ne relancent rien. */
-const SHINY_RATE = 1;
+const SHINY_RATE = 1 / 1024;
 const RELOAD_AFTER = 4;
 const pad = n => String(n).padStart(4, "0");
 
