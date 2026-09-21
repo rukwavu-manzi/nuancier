@@ -1,7 +1,7 @@
 /* Service worker du Nuancier : l'appli fonctionne hors connexion.
    - La page : réseau d'abord (pour recevoir les mises à jour), cache si hors ligne.
    - Icônes, manifeste, polices : cache d'abord. */
-const CACHE = "nuancier-v1";
+const CACHE = "nuancier-v2";
 const CORE = ["./", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

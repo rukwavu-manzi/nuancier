@@ -438,6 +438,16 @@ const key = (r, c) => `${r},${c}`;
    première, et après la dernière colonne on retrouve la première. */
 const wrapR = r => ((r % ROWS) + ROWS) % ROWS;
 const wrapC = c => ((c % COLS) + COLS) % COLS;
+/* Case voisine dans une direction, en bouclant et en SAUTANT les cases vides
+   (sinon les coins qui touchent les trous de la dernière ligne seraient bloqués).
+   Renvoie null s'il n'y a pas d'autre case dans cette direction. */
+function step(r, c, dy, dx) {
+  for (let i = 0; i < Math.max(ROWS, COLS); i++) {
+    r = wrapR(r + dy); c = wrapC(c + dx);
+    if (isCell(r, c)) return r === state.pos.r && c === state.pos.c && i ? null : [r, c];
+  }
+  return null;
+}
 
 /* ---------- État ----------
    assign : mémoire de la carte, couleur tirée pour chaque case (visitée ou voisine)
@@ -491,11 +501,16 @@ const cellEls = new Map();
 let view = { ...state.pos };
 
 function syncWindow() {
-  const keep = new Set();
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-    const y = view.r + dy, x = view.c + dx, real = wrapR(y), realC = wrapC(x);
-    if (!isCell(real, realC)) continue;
-    const k = key(y, x); keep.add(k);
+  const keep = new Set(), want = [[0, 0, state.pos.r, state.pos.c]];
+  for (const [dy, dx] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+    const n = step(state.pos.r, state.pos.c, dy, dx);
+    if (n) want.push([dy, dx, ...n]);
+  }
+  for (const [dy, dx, real, realC] of want) {
+    const y = view.r + dy, x = view.c + dx, k = key(y, x);
+    keep.add(k);
+    const cur = cellEls.get(k);
+    if (cur && cur.dataset.cell !== key(real, realC)) { cur.remove(); cellEls.delete(k); }
     if (!cellEls.has(k)) {
       const el = document.createElement("section");
       el.style.left = `${x * 100}vw`; el.style.top = `${y * 100}${vh}`;
@@ -563,9 +578,9 @@ function render() {
   root.setProperty("--ink-faint", `rgba(${ink},.16)`);
   root.setProperty("--on-ink", ink[0] > 100 ? "#141414" : "#f8f6f2");
   for (const [k, [dy, dx]] of Object.entries(arrows)) {
-    const ok = isCell(wrapR(r + dy), wrapC(c + dx));
-    arrowEls[k].classList.toggle("on", ok);
-    arrowEls[k].classList.toggle("new", ok && !state.seen[key(wrapR(r + dy), wrapC(c + dx))]);
+    const n = step(r, c, dy, dx);
+    arrowEls[k].classList.toggle("on", !!n);
+    arrowEls[k].classList.toggle("new", !!n && !state.seen[key(...n)]);
   }
   $("mode").setAttribute("aria-pressed", game.guessMode);
   $("level-btn").textContent = `Niv. ${game.level + 1} · ${LEVELS[game.level].name}`;
@@ -672,8 +687,8 @@ function bump(dy, dx) {
   ], { duration: 240, easing: "ease-out" });
 }
 function neighborOk(dy, dx) {
-  const r = wrapR(state.pos.r + dy), c = wrapC(state.pos.c + dx);
-  return isCell(r, c) && canEnter(r, c);
+  const n = step(state.pos.r, state.pos.c, dy, dx);
+  return !!n && canEnter(...n);
 }
 
 function move(dy, dx) {
@@ -681,7 +696,7 @@ function move(dy, dx) {
   if (moving) { queued = [dy, dx]; return; }
   if (!neighborOk(dy, dx)) { off = { x: 0, y: 0 }; place(true); bump(dy, dx); return; }
 
-  const r = wrapR(state.pos.r + dy), c = wrapC(state.pos.c + dx);
+  const [r, c] = step(state.pos.r, state.pos.c, dy, dx);
   state.pos = { r, c };
   view = { r: view.r + dy, c: view.c + dx };
   syncWindow();
